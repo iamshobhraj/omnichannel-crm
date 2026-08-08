@@ -15,6 +15,9 @@
 | 2 | **[CLIENT_SETUP_CHECKLIST.md](./CLIENT_SETUP_CHECKLIST.md)** | Short action checklist — what the client must create/buy this week |
 | 3 | **[10_DAY_DELIVERY_PLAN.md](./10_DAY_DELIVERY_PLAN.md)** | 10-day build plan: development, deployment, reliability, UAT & launch |
 | 4 | **[DEVELOPER_SYSTEM_DESIGN.md](./DEVELOPER_SYSTEM_DESIGN.md)** | **Share with developers** — how to build the system (architecture, schema, modules, APIs, AI, deploy) |
+| 5 | **[AISENSY_INTEGRATION.md](./AISENSY_INTEGRATION.md)** | WhatsApp / AiSensy webhook + send integration steps |
+| 6 | **[RENDER_DEPLOY.md](./RENDER_DEPLOY.md)** | Deploy demo to Render |
+| 7 | **[DEMO_BUILD_PLAN.md](./DEMO_BUILD_PLAN.md)** | Demo feature parity / build plan |
 
 ---
 
