@@ -6,9 +6,10 @@
 2. Open the one-click deploy link (or Render Dashboard → **New** → **Blueprint** → select this repo):
 
    ```
-   https://render.com/deploy?repo=<YOUR_GITHUB_REPO_URL>
+   https://render.com/deploy?repo=https://github.com/Mustafi2703/omnichannel-crm
    ```
 
+   Or use the button in the root README.
 3. Render creates:
    - PostgreSQL database (free plan expires after 30 days)
    - Web service (`omnichannel-crm`)

@@ -6,6 +6,14 @@ LeadGen-class capabilities: unified inbox, web widget, WhatsApp (AiSensy), AI FA
 
 ---
 
+## Deploy to Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Mustafi2703/omnichannel-crm)
+
+Or follow [docs/RENDER_DEPLOY.md](./docs/RENDER_DEPLOY.md).
+
+---
+
 ## Quick start (local)
 
 ```bash
