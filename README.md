@@ -26,6 +26,36 @@ npm run dev
 
 Open http://localhost:3000
 
+### Windows / shared local environment for worktrees
+
+Use Node 22 (the version in [`.nvmrc`](./.nvmrc)). Run this once from each
+worktree:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-local.ps1
+```
+
+The script keeps the canonical local settings in
+`%LOCALAPPDATA%\OmniCRM\shared.env` and copies it into the current worktree as
+the Git-ignored `.env`. Fill in `DATABASE_URL` and a long `JWT_SECRET` in the
+shared file once; future worktrees can reuse it with the same command. Use
+`-Force` only when you intentionally want to overwrite a worktree's `.env`.
+
+### Checks
+
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+```
+
+GitHub Actions runs these checks for pull requests and pushes to `main`.
+
+If an interrupted or corrupted install leaves npm retrying tarballs, cancel it,
+then run `npm ci` again. The repository's ignored `.npm-cache` keeps this
+project separate from the Windows user-level npm cache.
+
 ### Demo logins
 
 | Email | Password | Role |
@@ -67,6 +97,7 @@ Open http://localhost:3000
 | [docs/AISENSY_INTEGRATION.md](./docs/AISENSY_INTEGRATION.md) | WhatsApp / AiSensy steps |
 | [docs/RENDER_DEPLOY.md](./docs/RENDER_DEPLOY.md) | Deploy to Render |
 | [docs/DEMO_BUILD_PLAN.md](./docs/DEMO_BUILD_PLAN.md) | Demo build plan |
+| [docs/IMPLEMENTATION_STATUS_AND_BACKLOG.md](./docs/IMPLEMENTATION_STATUS_AND_BACKLOG.md) | Current verified status and prioritized delivery backlog |
 
 ---
 

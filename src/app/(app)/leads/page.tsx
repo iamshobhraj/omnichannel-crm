@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/ClientProviders";
 import { t } from "@/lib/i18n";
 import { formatMoney, formatDate } from "@/lib/utils";
@@ -24,16 +24,16 @@ export default function LeadsPage() {
   const [stages, setStages] = useState<Stage[]>([]);
   const [q, setQ] = useState("");
 
-  async function load(query = q) {
+  const load = useCallback(async (query = "") => {
     const res = await fetch(`/api/leads?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     setLeads(data.leads || []);
     setStages(data.stages || []);
-  }
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   async function moveStage(id: string, stageId: string) {
     await fetch("/api/leads", {
@@ -41,7 +41,7 @@ export default function LeadsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, stageId }),
     });
-    load();
+    load(q);
   }
 
   return (

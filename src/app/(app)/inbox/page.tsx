@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/ClientProviders";
 import { t } from "@/lib/i18n";
 import { formatDate, cn } from "@/lib/utils";
@@ -36,26 +36,26 @@ export default function InboxPage() {
   const [thread, setThread] = useState<Thread | null>(null);
   const [text, setText] = useState("");
 
-  async function loadList() {
+  const loadList = useCallback(async () => {
     const res = await fetch("/api/conversations");
     const data = await res.json();
     setList(data.conversations || []);
-    if (!active && data.conversations?.[0]) setActive(data.conversations[0].id);
-  }
+    setActive((current) => current || data.conversations?.[0]?.id || null);
+  }, []);
 
-  async function loadThread(id: string) {
+  const loadThread = useCallback(async (id: string) => {
     const res = await fetch(`/api/conversations/${id}`);
     const data = await res.json();
     setThread(data.conversation);
-  }
-
-  useEffect(() => {
-    loadList();
   }, []);
 
   useEffect(() => {
+    loadList();
+  }, [loadList]);
+
+  useEffect(() => {
     if (active) loadThread(active);
-  }, [active]);
+  }, [active, loadThread]);
 
   async function send(asBot = false) {
     if (!active || !text.trim()) return;
