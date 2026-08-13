@@ -72,6 +72,8 @@ model Tenant {
   rateCard        RateCard?
   budgetPolicy    BudgetPolicy?
   messages        Message[]
+  auditLogs       AuditLog[]
+  integrations    IntegrationConnection[]
 }
 
 model User {
@@ -92,6 +94,7 @@ model User {
   assignedConvos   Conversation[] @relation("ConvoAssignee")
   assignedTasks    Task[]         @relation("TaskAssignee")
   sentMessages     Message[]
+  auditLogs        AuditLog[]
 
   @@unique([tenantId, email])
 }
@@ -137,6 +140,7 @@ model Contact {
   identities    ContactIdentity[]
   leads         Lead[]
   conversations Conversation[]
+  tasks         Task[]
 
   @@index([tenantId, phone])
   @@index([tenantId, email])
@@ -202,6 +206,7 @@ model Conversation {
   contact  Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
   assignee User?     @relation("ConvoAssignee", fields: [assigneeId], references: [id])
   messages Message[]
+  tasks    Task[]
 
   @@index([tenantId, status, lastMessageAt])
 }
@@ -231,6 +236,8 @@ model Task {
   tenantId     String
   type         String     @default("follow_up")
   leadId       String?
+  contactId    String?
+  conversationId String?
   title        String
   body         String?
   assigneeId   String?
@@ -242,9 +249,45 @@ model Task {
 
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   lead     Lead?  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contact  Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   assignee User?  @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   @@index([tenantId, status, dueAt])
+  @@index([tenantId, contactId])
+  @@index([tenantId, conversationId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String?
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor  User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType, entityId])
+}
+
+model IntegrationConnection {
+  id                String   @id @default(cuid())
+  tenantId          String
+  provider          String
+  encryptedConfig   String
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
 }
 
 model KnowledgeDocument {

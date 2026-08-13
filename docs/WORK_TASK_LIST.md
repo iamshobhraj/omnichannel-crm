@@ -37,18 +37,18 @@ scope are in [IMPLEMENTATION_STATUS_AND_BACKLOG.md](./IMPLEMENTATION_STATUS_AND_
 
 ## Phase 2 — API security and CRM correctness
 
-- [ ] Create shared Zod schemas and validate every mutation/webhook payload.
-- [ ] Standardize API error responses and status codes.
-- [ ] Enforce Owner/Admin/Agent permissions on all API routes.
-- [ ] Add audit log schema/service for high-impact mutations.
-- [ ] Add contact CRUD, detail, identity merge, and search/pagination.
-- [ ] Add lead CRUD/detail: owner, tags, notes, lost reason, values,
+- [x] Create shared Zod schemas and validate every mutation/webhook payload.
+- [x] Standardize API error responses and status codes.
+- [x] Enforce Owner/Admin/Agent permissions on all internal API routes.
+- [x] Add audit log schema/service for high-impact mutations.
+- [x] Add contact CRUD, detail, identity merge, and search/pagination.
+- [x] Add lead CRUD/detail: owner, tags, notes, lost reason, values,
       follow-up date, and stage rules.
-- [ ] Add task CRUD, assignment, and relation to lead/contact/conversation.
-- [ ] Add pipeline/stage administration for Owner/Admin.
-- [ ] Add user administration and deactivate-user flow.
-- [ ] Implement KVKK export and anonymize/delete flows.
-- [ ] Encrypt integration credentials at rest.
+- [x] Add task CRUD, assignment, and relation to lead/contact/conversation.
+- [x] Add pipeline/stage administration for Owner/Admin.
+- [x] Add user administration and deactivate-user flow.
+- [x] Implement KVKK export and anonymize/delete flows.
+- [x] Encrypt integration credentials at rest.
 
 ## Phase 3 — Inbox, widget, and automations
 

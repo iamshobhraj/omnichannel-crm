@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { generateBotReply, logAiUsage } from "@/lib/ai";
 import { sendAisensyText, logWhatsappUsage } from "@/lib/aisensy";
+import { z } from "zod";
+import { fromApiError, idSchema } from "@/lib/api";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
   try {
     const session = await requireSession();
-    const { id } = await ctx.params;
+    const id = idSchema.parse((await ctx.params).id);
     const conversation = await prisma.conversation.findFirst({
       where: { id, tenantId: session.tenantId },
       include: {
@@ -20,17 +22,17 @@ export async function GET(_req: Request, ctx: Ctx) {
     });
     if (!conversation) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ conversation });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return fromApiError(error);
   }
 }
 
 export async function POST(req: Request, ctx: Ctx) {
   try {
     const session = await requireSession();
-    const { id } = await ctx.params;
-    const body = await req.json();
-    const text = String(body.text || "").trim();
+    const id = idSchema.parse((await ctx.params).id);
+    const body = z.object({ text: z.string().trim().min(1).max(10_000), asBot: z.boolean().optional(), triggerAi: z.boolean().optional() }).parse(await req.json());
+    const text = body.text;
     const asBot = Boolean(body.asBot);
     if (!text) return NextResponse.json({ error: "Empty" }, { status: 400 });
 
@@ -110,17 +112,16 @@ export async function POST(req: Request, ctx: Ctx) {
       data: { lastMessageAt: new Date() },
     });
     return NextResponse.json({ message });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return fromApiError(error);
   }
 }
 
 export async function PATCH(req: Request, ctx: Ctx) {
   try {
     const session = await requireSession();
-    const { id } = await ctx.params;
-    const body = await req.json();
+    const id = idSchema.parse((await ctx.params).id);
+    const body = z.object({ aiMode: z.enum(["auto", "suggest", "off"]).optional(), status: z.enum(["open", "pending", "closed"]).optional(), assigneeId: z.string().min(1).max(64).nullable().optional(), handoff: z.boolean().optional() }).parse(await req.json());
     const conversation = await prisma.conversation.updateMany({
       where: { id, tenantId: session.tenantId },
       data: {
@@ -133,7 +134,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
       },
     });
     return NextResponse.json({ ok: true, count: conversation.count });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return fromApiError(error);
   }
 }

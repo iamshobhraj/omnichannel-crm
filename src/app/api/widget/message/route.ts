@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateBotReply, logAiUsage } from "@/lib/ai";
+import { z } from "zod";
+import { apiError } from "@/lib/api";
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const slug = String(body.tenantSlug || "demo-sirket");
-  const text = String(body.text || "").trim();
-  const visitorId = String(body.visitorId || `web-${Date.now()}`);
-  const name = String(body.name || "Web Visitor");
-  const locale = body.locale === "en" ? "en" : "tr";
+  const parsed = z.object({ tenantSlug: z.string().max(100).optional(), text: z.string().trim().min(1).max(10_000), visitorId: z.string().max(120).optional(), name: z.string().max(160).optional(), locale: z.enum(["tr", "en"]).optional(), utm: z.record(z.string(), z.string().max(500)).optional() }).safeParse(await req.json());
+  if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "A message is required");
+  const body = parsed.data;
+  const slug = body.tenantSlug || "demo-sirket";
+  const text = body.text;
+  const visitorId = body.visitorId || `web-${Date.now()}`;
+  const name = body.name || "Web Visitor";
+  const locale = body.locale || "tr";
   const utm = body.utm || {};
-
-  if (!text) return NextResponse.json({ error: "Empty" }, { status: 400 });
 
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant) return NextResponse.json({ error: "Tenant not found" }, { status: 404 });

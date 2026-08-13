@@ -7,11 +7,14 @@ import {
   verifyPassword,
   getSession,
 } from "@/lib/auth";
+import { z } from "zod";
+import { apiError } from "@/lib/api";
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const email = String(body.email || "").toLowerCase().trim();
-  const password = String(body.password || "");
+  const parsed = z.object({ email: z.string().email().max(254), password: z.string().min(1).max(128) }).safeParse(await req.json());
+  if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "Email and password are required");
+  const email = parsed.data.email.toLowerCase().trim();
+  const password = parsed.data.password;
   const user = await prisma.user.findFirst({
     where: { email, isActive: true },
   });

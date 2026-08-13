@@ -36,7 +36,7 @@ export default function LeadsPage() {
   }, [load]);
 
   async function moveStage(id: string, stageId: string) {
-    await fetch("/api/leads", {
+    await fetch(`/api/leads/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, stageId }),
