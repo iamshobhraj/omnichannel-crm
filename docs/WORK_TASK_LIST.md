@@ -10,9 +10,11 @@ scope are in [IMPLEMENTATION_STATUS_AND_BACKLOG.md](./IMPLEMENTATION_STATUS_AND_
 - [x] Add CI: install, lint, type-check, production build.
 - [x] Upgrade Next.js to patched `15.5.21`.
 - [x] Record implementation status and delivery backlog.
-- [ ] Confirm client scope, acceptance criteria, pipeline stages, and priority
-      order for the remaining work.
-- [ ] Replace demo tenant branding, users, and credentials before staging/UAT.
+- [x] Confirm internal launch scope, acceptance criteria, and delivery order;
+      see [Phase 0 delivery decisions](./PHASE_0_DELIVERY_DECISIONS.md).
+- [ ] **Client dependency:** replace demo tenant branding, users, and
+      credentials after client-approved configuration is received; required
+      before staging/UAT.
 
 ## Phase 1 — Knowledge base and RAG (client priority)
 

@@ -99,6 +99,7 @@ project separate from the Windows user-level npm cache.
 | [docs/DEMO_BUILD_PLAN.md](./docs/DEMO_BUILD_PLAN.md) | Demo build plan |
 | [docs/IMPLEMENTATION_STATUS_AND_BACKLOG.md](./docs/IMPLEMENTATION_STATUS_AND_BACKLOG.md) | Current verified status and prioritized delivery backlog |
 | [docs/WORK_TASK_LIST.md](./docs/WORK_TASK_LIST.md) | Active execution checklist for the delivery |
+| [docs/PHASE_0_DELIVERY_DECISIONS.md](./docs/PHASE_0_DELIVERY_DECISIONS.md) | Confirmed launch scope and client configuration still needed |
 
 ---
 
