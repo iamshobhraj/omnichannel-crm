@@ -19,18 +19,21 @@ scope are in [IMPLEMENTATION_STATUS_AND_BACKLOG.md](./IMPLEMENTATION_STATUS_AND_
 ## Phase 1 — Knowledge base and RAG (client priority)
 
 - [ ] Confirm supported source formats and obtain the client FAQ/brochure pack.
-- [ ] Provision PostgreSQL 16 with the `pgvector` extension.
-- [ ] Add Prisma migration for knowledge document metadata and knowledge chunks.
-- [ ] Build knowledge document CRUD API with tenant and role enforcement.
-- [ ] Build knowledge management UI: list, upload/paste, status, retry,
+- [x] Add PostgreSQL `pgvector` migration and vector index; deploy against a
+      PostgreSQL 16+ instance before use.
+- [x] Add Prisma schema for knowledge document metadata and knowledge chunks.
+- [x] Build knowledge document CRUD API with tenant and role enforcement.
+- [x] Build knowledge management UI: list, upload/paste, status, retry,
       re-index, delete.
-- [ ] Extract text from plain text, PDF, and DOCX sources.
-- [ ] Implement chunking, token counting, embeddings, and vector indexing.
-- [ ] Run background knowledge ingestion with retry/failure state.
-- [ ] Retrieve top relevant chunks for each AI message.
-- [ ] Add answer citations, low-confidence fallback, and human handoff.
-- [ ] Log model, token counts, latency, and cost for AI requests.
-- [ ] Add tests for ingestion, tenant isolation, and retrieval quality.
+- [x] Extract text from plain text, PDF, and DOCX sources.
+- [x] Implement chunking, token counting, embeddings, and vector indexing.
+- [x] Run post-response knowledge ingestion with retry/failure state; replace
+      with durable BullMQ processing in Phase 3/5 production work.
+- [x] Retrieve top relevant chunks for each AI message.
+- [x] Add retrieved-context grounding and human handoff rule.
+- [x] Add displayed source citations and model-latency metadata to message UI.
+- [ ] Add automated integration tests against PostgreSQL + pgvector and an
+      OpenAI test double.
 
 ## Phase 2 — API security and CRM correctness
 

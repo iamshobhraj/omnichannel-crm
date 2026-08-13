@@ -76,6 +76,7 @@ export async function POST(req: Request) {
       ? "Mesajınız alındı. Kısa süre içinde dönüş yapacağız."
       : "Thanks — we received your message.";
   let handoff = false;
+  let aiMeta: object | undefined;
 
   if (conversation.aiMode === "auto") {
     const history = await prisma.message.findMany({
@@ -95,6 +96,15 @@ export async function POST(req: Request) {
     });
     reply = ai.reply;
     handoff = ai.handoff;
+    aiMeta = {
+      model: ai.usedModel,
+      latencyMs: ai.latencyMs,
+      sources: (ai.sources || []).map((source) => ({
+        documentId: source.documentId,
+        title: source.title,
+        score: source.score,
+      })),
+    };
     await logAiUsage({
       tenantId: tenant.id,
       tokensIn: ai.tokensIn,
@@ -139,6 +149,7 @@ export async function POST(req: Request) {
       direction: "outbound",
       senderType: handoff ? "system" : "bot",
       bodyText: reply,
+      aiMeta,
     },
   });
   await prisma.conversation.update({
@@ -151,5 +162,6 @@ export async function POST(req: Request) {
     handoff,
     visitorId,
     conversationId: conversation.id,
+    sources: (aiMeta as { sources?: unknown } | undefined)?.sources || [],
   });
 }

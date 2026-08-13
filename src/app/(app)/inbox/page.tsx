@@ -26,6 +26,7 @@ type Thread = {
     senderType: string;
     bodyText: string;
     createdAt: string;
+    aiMeta?: { model?: string; latencyMs?: number; sources?: { title: string }[] } | null;
   }[];
 };
 
@@ -135,6 +136,15 @@ export default function InboxPage() {
                   >
                     <div className="mb-1 text-[10px] opacity-70">{m.senderType}</div>
                     {m.bodyText}
+                    {m.aiMeta?.sources && m.aiMeta.sources.length > 0 ? (
+                      <div className="mt-1 text-[10px] opacity-70">
+                        {locale === "tr" ? "Kaynak: " : "Sources: "}
+                        {m.aiMeta.sources.map((source) => source.title).join(", ")}
+                      </div>
+                    ) : null}
+                    {m.aiMeta?.latencyMs ? (
+                      <div className="mt-1 text-[10px] opacity-60">AI {m.aiMeta.model} · {m.aiMeta.latencyMs} ms</div>
+                    ) : null}
                     <div className="mt-1 text-[10px] opacity-60">{formatDate(m.createdAt, locale === "tr" ? "tr-TR" : "en-US")}</div>
                   </div>
                 ))}

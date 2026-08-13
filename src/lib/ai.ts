@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { prisma } from "./prisma";
+import { retrieveKnowledge, type KnowledgeSource } from "./knowledge";
 
 export type AiReplyResult = {
   reply: string;
@@ -9,6 +10,8 @@ export type AiReplyResult = {
   usedModel: string;
   tokensIn?: number;
   tokensOut?: number;
+  latencyMs?: number;
+  sources?: KnowledgeSource[];
 };
 
 function client() {
@@ -24,26 +27,34 @@ export async function generateBotReply(params: {
   history: { role: "user" | "assistant"; content: string }[];
   locale: "tr" | "en";
 }): Promise<AiReplyResult> {
-  const docs = await prisma.knowledgeDocument.findMany({
-    where: { tenantId: params.tenantId, status: "ready" },
-    take: 3,
-  });
-  const kb = docs.map((d) => `# ${d.title}\n${d.content}`).join("\n\n");
+  const startedAt = Date.now();
+  const lastUserMessage = params.history.filter((message) => message.role === "user").at(-1)?.content || "";
+  let sources: KnowledgeSource[] = [];
+  try {
+    sources = await retrieveKnowledge({ tenantId: params.tenantId, query: lastUserMessage });
+  } catch (error) {
+    console.error("Knowledge retrieval failed", error);
+  }
+  const kb = sources
+    .map((source, index) => `[${index + 1}] ${source.title}\n${source.content}`)
+    .join("\n\n");
 
   const system =
     params.locale === "tr"
       ? `Sen bir Türkçe satış asistanısın (Omnichannel CRM). FAQ bilgisini kullan.
+Yalnızca KB'de desteklenen ürün gerçeklerini söyle; KB yeterli değilse insan desteğine yönlendir.
 Kesin fiyat/sözleşme uydurma. Nitelendirme için şehir, ihtiyaç, zaman çizelgesi sor.
 İnsan istediğinde veya karmaşık fiyatta handoff=true yap.
 JSON dön: {"reply":"...","handoff":false,"qualification":{"city":"","need":"","timeline":""},"scoreDelta":0}`
       : `You are a sales assistant for an Omnichannel CRM. Use the FAQ knowledge.
+Only state product facts supported by the KB; hand off if the KB is insufficient.
 Never invent pricing/contracts. Qualify with city, need, timeline.
 If user asks for human or pricing is complex, set handoff=true.
 Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":"","timeline":""},"scoreDelta":0}`;
 
   const openai = client();
   if (!openai) {
-    return ruleBasedFallback(params, kb);
+    return { ...ruleBasedFallback(params, kb), sources, latencyMs: Date.now() - startedAt };
   }
 
   try {
@@ -70,10 +81,12 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
       usedModel: completion.model,
       tokensIn: completion.usage?.prompt_tokens,
       tokensOut: completion.usage?.completion_tokens,
+      latencyMs: Date.now() - startedAt,
+      sources,
     };
   } catch (err) {
     console.error("OpenAI failed, fallback", err);
-    return ruleBasedFallback(params, kb);
+    return { ...ruleBasedFallback(params, kb), sources, latencyMs: Date.now() - startedAt };
   }
 }
 

@@ -67,6 +67,7 @@ model Tenant {
   pipelineStages  PipelineStage[]
   tasks           Task[]
   knowledgeDocs   KnowledgeDocument[]
+  knowledgeChunks KnowledgeChunk[]
   usageEvents     UsageEvent[]
   rateCard        RateCard?
   budgetPolicy    BudgetPolicy?
@@ -247,14 +248,40 @@ model Task {
 }
 
 model KnowledgeDocument {
-  id        String   @id @default(cuid())
-  tenantId  String
-  title     String
-  content   String
-  status    String   @default("ready")
-  createdAt DateTime @default(now())
+  id             String           @id @default(cuid())
+  tenantId       String
+  title          String
+  content        String
+  sourceFilename String?
+  mimeType       String?
+  // Keep existing seeded/imported documents visible. New uploads explicitly start
+  // in `processing` in the API while their embeddings are generated.
+  status         String           @default("ready")
+  errorMessage   String?
+  embeddingModel String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  chunks KnowledgeChunk[]
+
+  @@index([tenantId, status])
+}
+
+model KnowledgeChunk {
+  id         String   @id
+  tenantId   String
+  documentId String
+  content    String
+  tokenCount Int
+  metadata   Json     @default("{}")
+  embedding  Unsupported("vector(1536)")
+  createdAt  DateTime @default(now())
+
+  tenant   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  document KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, documentId])
 }
 
 model UsageEvent {

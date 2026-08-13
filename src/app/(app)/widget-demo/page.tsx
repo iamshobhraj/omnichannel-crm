@@ -15,7 +15,7 @@ export default function WidgetDemoPage() {
     }
     return id;
   }, []);
-  const [messages, setMessages] = useState<{ role: string; text: string }[]>([
+  const [messages, setMessages] = useState<{ role: string; text: string; sources?: { title: string }[] }[]>([
     {
       role: "bot",
       text:
@@ -45,7 +45,7 @@ export default function WidgetDemoPage() {
       }),
     });
     const data = await res.json();
-    setMessages((m) => [...m, { role: "bot", text: data.reply || "…" }]);
+    setMessages((m) => [...m, { role: "bot", text: data.reply || "…", sources: data.sources || [] }]);
     setBusy(false);
   }
 
@@ -72,6 +72,12 @@ export default function WidgetDemoPage() {
               }`}
             >
               {m.text}
+              {m.sources && m.sources.length > 0 ? (
+                <div className="mt-2 border-t border-slate-200 pt-1 text-[10px] text-slate-500">
+                  {locale === "tr" ? "Kaynak: " : "Sources: "}
+                  {m.sources.map((source) => source.title).join(", ")}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>

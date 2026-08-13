@@ -59,7 +59,16 @@ export async function POST(req: Request, ctx: Ctx) {
       });
       replyText = ai.reply;
       senderType = "bot";
-      aiMeta = { model: ai.usedModel, handoff: ai.handoff };
+      aiMeta = {
+        model: ai.usedModel,
+        handoff: ai.handoff,
+        latencyMs: ai.latencyMs,
+        sources: (ai.sources || []).map((source) => ({
+          documentId: source.documentId,
+          title: source.title,
+          score: source.score,
+        })),
+      };
       await logAiUsage({
         tenantId: session.tenantId,
         tokensIn: ai.tokensIn,
