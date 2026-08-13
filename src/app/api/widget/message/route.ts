@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { generateBotReply, logAiUsage } from "@/lib/ai";
 import { z } from "zod";
 import { apiError } from "@/lib/api";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const limit = rateLimit(`widget:${clientIp(req)}`, 20);
+  if (!limit.ok) return NextResponse.json({ error: { code: "RATE_LIMITED", message: "Too many requests" } }, { status: 429, headers: { "Retry-After": String(limit.retryAfter) } });
   const parsed = z.object({ tenantSlug: z.string().max(100).optional(), text: z.string().trim().min(1).max(10_000), visitorId: z.string().max(120).optional(), name: z.string().max(160).optional(), locale: z.enum(["tr", "en"]).optional(), utm: z.record(z.string(), z.string().max(500)).optional() }).safeParse(await req.json());
   if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "A message is required");
   const body = parsed.data;

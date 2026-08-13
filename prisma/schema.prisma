@@ -72,8 +72,12 @@ model Tenant {
   rateCard        RateCard?
   budgetPolicy    BudgetPolicy?
   messages        Message[]
+  attachments     Attachment[]
   auditLogs       AuditLog[]
   integrations    IntegrationConnection[]
+  notifications   Notification[]
+  automationRules AutomationRule[]
+  automationRuns  AutomationRun[]
 }
 
 model User {
@@ -207,6 +211,7 @@ model Conversation {
   assignee User?     @relation("ConvoAssignee", fields: [assigneeId], references: [id])
   messages Message[]
   tasks    Task[]
+  attachments Attachment[]
 
   @@index([tenantId, status, lastMessageAt])
 }
@@ -221,11 +226,14 @@ model Message {
   bodyText          String
   externalMessageId String?
   aiMeta            Json?
+  deliveryStatus    String           @default("sent")
+  deliveryError     String?
   createdAt         DateTime         @default(now())
 
   tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderUser   User?        @relation(fields: [senderUserId], references: [id])
+  attachments  Attachment[]
 
   @@unique([tenantId, externalMessageId])
   @@index([conversationId, createdAt])
@@ -256,6 +264,68 @@ model Task {
   @@index([tenantId, status, dueAt])
   @@index([tenantId, contactId])
   @@index([tenantId, conversationId])
+}
+
+model Attachment {
+  id             String   @id @default(cuid())
+  tenantId       String
+  conversationId String
+  messageId      String?
+  filename       String
+  contentType    String
+  storageKey     String
+  sizeBytes      Int
+  createdAt      DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, conversationId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String?
+  type        String
+  title       String
+  body        String?
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, readAt])
+}
+
+model AutomationRule {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  trigger   String
+  action    String
+  config    Json     @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  runs   AutomationRun[]
+  @@index([tenantId, trigger, isActive])
+}
+
+model AutomationRun {
+  id        String   @id @default(cuid())
+  tenantId  String
+  ruleId    String
+  status    String
+  detail    Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rule AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  @@index([tenantId, createdAt])
 }
 
 model AuditLog {

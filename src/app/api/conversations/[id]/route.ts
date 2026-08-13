@@ -5,6 +5,7 @@ import { generateBotReply, logAiUsage } from "@/lib/ai";
 import { sendAisensyText, logWhatsappUsage } from "@/lib/aisensy";
 import { z } from "zod";
 import { fromApiError, idSchema } from "@/lib/api";
+import { notify } from "@/lib/notifications";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -133,6 +134,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
           : {}),
       },
     });
+    if (body.assigneeId) await notify({ tenantId: session.tenantId, userId: body.assigneeId, type: "conversation_assigned", title: "New conversation assigned", body: `Conversation ${id} was assigned to you.` });
     return NextResponse.json({ ok: true, count: conversation.count });
   } catch (error) {
     return fromApiError(error);

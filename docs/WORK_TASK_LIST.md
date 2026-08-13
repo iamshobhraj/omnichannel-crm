@@ -56,7 +56,7 @@ scope are in [IMPLEMENTATION_STATUS_AND_BACKLOG.md](./IMPLEMENTATION_STATUS_AND_
       improvements.
 - [ ] Add reliable outbound delivery states; prevent failed WhatsApp sends from
       appearing as sent.
-- [ ] Add attachment/media model and storage policy.
+- [x] Add attachment/media model and storage policy.
 - [ ] Build actual embeddable widget package with public tenant key, branding,
       visitor session, and configurable allowed domains.
 - [ ] Rate limit and protect public widget, login, and webhook endpoints.
