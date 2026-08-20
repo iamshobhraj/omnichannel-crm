@@ -122,19 +122,23 @@ scope are in [IMPLEMENTATION_STATUS_AND_BACKLOG.md](./IMPLEMENTATION_STATUS_AND_
 
 - [ ] Decide whether to retain the single Next.js architecture or implement the
       documented NestJS + Redis/BullMQ architecture; update docs to match.
-- [ ] Add Docker Compose for app, Postgres, Redis, and workers.
-- [x] Add initial Dockerfile and Compose topology for app, PostgreSQL 16 with
-      pgvector, and Redis. A separately supervised worker remains pending.
+- [x] Add Docker Compose for app, Postgres, Redis, and workers.
+- [x] Add Dockerfile and Compose topology for app, PostgreSQL 16 with
+      pgvector, Redis, and a separately supervised worker; verified on the
+      private staging VPS.
 - [ ] Provision EU VPS, Cloudflare DNS/TLS, reverse proxy, and client domains.
 - [ ] Create separate staging and production environments/databases.
-- [ ] Replace `prisma db push` deployment usage with reviewed Prisma migrations.
+- [x] Replace `prisma db push` deployment usage with a reviewed baseline Prisma
+      migration; validate `prisma migrate deploy` against an empty PostgreSQL
+      16 + pgvector database before production use.
 - [ ] Prevent demo seed data from initializing production.
 - [ ] Add `/ready` for Postgres and Redis readiness.
 - [x] Add `/api/ready` with PostgreSQL and Redis probes.
 - [ ] Add Sentry, structured request logging, and an external uptime monitor.
 - [ ] Add daily database backups, seven-day retention, and restore-drill docs.
 - [x] Add a seven-day-retention backup script and operational deploy/restore
-      runbook; VPS scheduling and a real restore drill remain pending.
+      runbook; daily VPS scheduling and a successful restore drill are verified
+      on private staging.
 - [ ] Add disk-capacity alert and Compose restart policies.
 - [ ] Add CI deployment: deploy, migrate, verify health, rollback/runbook.
 

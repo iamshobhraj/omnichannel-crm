@@ -11,9 +11,11 @@
 ## Backup and restore drill
 
 Schedule `scripts/backup-postgres.sh` daily using cron. It retains seven days by
-default. For the mandatory restore drill, restore a selected dump into a fresh
-Postgres database, run the application against it, and record the date, dump,
-and result in the deployment log.
+default. Private staging runs this at 02:17 UTC as root, writing compressed
+dumps to `/var/backups/omnicrm` and logs to `/var/log/omnicrm-backup.log`. For
+the mandatory restore drill, restore a selected dump into a fresh Postgres
+database, run the application against it, and record the date, dump, and result
+in the deployment log.
 
 ## Incident restart
 
