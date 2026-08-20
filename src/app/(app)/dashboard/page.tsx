@@ -25,6 +25,7 @@ export default function DashboardPage() {
       .then(setData)
       .catch(() => setData(null));
   }, []);
+  useEffect(() => { const source = new EventSource("/api/realtime"); source.addEventListener("summary", () => { fetch("/api/dashboard").then((r) => r.json()).then(setData).catch(() => {}); }); return () => source.close(); }, []);
 
   const cards = data
     ? [

@@ -1,6 +1,6 @@
 # Implementation Status and Delivery Backlog
 
-**Last reviewed:** 13 August 2026
+**Last reviewed:** 19 August 2026
 **Purpose:** Durable working baseline for the client delivery. Read this with the
 system design and 10-day delivery plan before starting a feature.
 
@@ -50,7 +50,9 @@ The repository is a **build-verified demo**, not a production-ready launch.
 
 - Enforce Owner/Admin/Agent permissions on every API route.
 - Validate all inputs with Zod and use a consistent API error shape.
-- Rate limit and configure allowed origins for widget, login, and webhooks.
+- Redis-backed distributed rate limiting and tenant-configured widget origins
+  are implemented; exercise both paths against the Compose Redis service before
+  deployment.
 - Correct outbound WhatsApp failure handling; do not store a failed send as sent.
 - Implement contact identity resolution/merge for web and WhatsApp identities.
 - Add audit logs; encrypt integration credentials; prevent PII-rich production
@@ -63,15 +65,29 @@ The repository is a **build-verified demo**, not a production-ready launch.
   configurable pipeline, and follow-up dates.
 - Task CRUD/assignment and follow-up/SLA automation.
 - Inbox filters, assignment, close/reopen, delivery states, attachments, and
-  mobile/loading/error/empty states.
-- Realtime dashboard inbox and notifications (WebSocket or SSE).
+  CRM context are implemented; validate the documented browser regression flow
+  against PostgreSQL/Redis before acceptance.
+- Realtime dashboard/inbox summaries and in-app notifications through SSE.
 - Resend email notifications and in-app notification records.
-- Automation rules/run log for assignment, qualification tagging, and SLA.
+- Automation rules/run log for assignment, qualification tagging, and SLA,
+  including BullMQ retry/dead-letter visibility.
+- Enforce WhatsApp's 24-hour customer-service window in the agent composer:
+  outside the window, agents must select an approved template rather than send
+  free-form text.
+- Add scheduled call/demo events linked to the lead, contact, and conversation;
+  show them in a focused follow-up calendar.
+- Agent-level automation pause on a contact/conversation, with execution
+  retry/failure visibility and persisted audit history.
 
 ### P1 — Integrations and economics
 
 - Validate AiSensy live webhook/auth/payload/send behavior with client
   credentials; add template-message support where required.
+- Manage the WhatsApp template lifecycle: provider sync, approval/rejection
+  status, language/category, variables, buttons, and ownership.
+- Add a consent-safe campaign workflow: choose an eligible audience, schedule
+  sends, persist durable marketing opt-outs, and report sent/delivered/read/
+  click/failed outcomes.
 - Add Google Ads attribution records, conversion actions, and campaign-level
   reporting; UTM/gclid capture is already partly present.
 - Rate card/budget settings, daily cost aggregates, source/campaign CPL,
@@ -109,6 +125,21 @@ The repository is a **build-verified demo**, not a production-ready launch.
 - Multi-tenant signup/billing, Instagram/Facebook inbox, raw Meta Cloud API,
   visual workflow designer, deep ERP/HubSpot integrations, Kubernetes, and AWS
   migration.
+- Full website behaviour tracking/form discovery, deal product catalogues and
+  arbitrary custom fields, and a general saved-report builder. Reassess after
+  the core inbox, WhatsApp, follow-up, and cost workflows are operating.
+
+## Reference workflow audit — 19 August 2026
+
+A read-only audit of a comparable authenticated CRM confirmed that the launch
+workflow should be: inbound web/WhatsApp conversation → channel/status-filtered
+inbox → assignment and AI/human handling → WhatsApp template enforcement when
+the customer-service window has expired → lead pipeline and follow-up →
+automation/campaign execution → cost and operational reporting.
+
+The audit informed the additions above. It is a behaviour reference only:
+OmniCRM must retain its own product design, copy, implementation, and the
+single-client launch scope agreed in the delivery decisions.
 
 ## Definition of done
 

@@ -107,7 +107,7 @@ project separate from the Windows user-level npm cache.
 
 - **Next.js 15** (App Router) + TypeScript + Tailwind
 - **Prisma** + PostgreSQL
-- **OpenAI** (optional) for AI replies
+- **OpenAI-compatible LLM** (optional) for AI replies, including NVIDIA NIM
 - **AiSensy** adapter for WhatsApp
 - JWT httpOnly session auth
 
@@ -120,7 +120,28 @@ project separate from the Windows user-level npm cache.
 See `.env.example`.
 
 Minimum: `DATABASE_URL`, `JWT_SECRET`  
-Optional: `OPENAI_API_KEY`, `AISENSY_API_KEY`, `AISENSY_API_URL`, `AISENSY_WEBHOOK_SECRET`
+Optional: `NVIDIA_API_KEY` (with optional `NVIDIA_MODEL`), or generic
+`LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL`; `OPENAI_API_KEY` remains the
+configured provider for the current 1536-dimension RAG embeddings. Also see
+`.env.example` for the AiSensy configuration.
+
+### NVIDIA test configuration
+
+The NVIDIA Integrate API is OpenAI-compatible for chat completions. Keep its
+credential only in the Git-ignored `.env`:
+
+```env
+NVIDIA_API_KEY="your-rotated-key"
+NVIDIA_BASE_URL="https://integrate.api.nvidia.com/v1"
+NVIDIA_MODEL="nvidia/nemotron-3-super-120b-a12b"
+```
+
+This enables live assistant replies while preserving the existing rule-based
+fallback when the provider is unavailable. Knowledge indexing is deliberately
+separate: the current pgvector column is `vector(1536)`, while NVIDIA's
+`nvidia/nv-embed-v1` produces 4096-dimension embeddings. Switching RAG to that
+model requires a reviewed database migration and re-indexing; do not set the
+chat model as an embedding model.
 
 ---
 

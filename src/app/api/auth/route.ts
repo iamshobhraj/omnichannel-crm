@@ -12,7 +12,7 @@ import { apiError } from "@/lib/api";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  const limit = rateLimit(`login:${clientIp(req)}`, 10);
+  const limit = await rateLimit(`login:${clientIp(req)}`, 10);
   if (!limit.ok) return apiError(429, "RATE_LIMITED", "Too many login attempts");
   const parsed = z.object({ email: z.string().email().max(254), password: z.string().min(1).max(128) }).safeParse(await req.json());
   if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "Email and password are required");

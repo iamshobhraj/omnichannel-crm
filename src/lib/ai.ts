@@ -1,6 +1,7 @@
-import OpenAI from "openai";
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import { prisma } from "./prisma";
 import { retrieveKnowledge, type KnowledgeSource } from "./knowledge";
+import { getChatClient } from "./llm";
 
 export type AiReplyResult = {
   reply: string;
@@ -13,12 +14,6 @@ export type AiReplyResult = {
   latencyMs?: number;
   sources?: KnowledgeSource[];
 };
-
-function client() {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
-  return new OpenAI({ apiKey: key });
-}
 
 export async function generateBotReply(params: {
   tenantId: string;
@@ -52,16 +47,19 @@ Never invent pricing/contracts. Qualify with city, need, timeline.
 If user asks for human or pricing is complex, set handoff=true.
 Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":"","timeline":""},"scoreDelta":0}`;
 
-  const openai = client();
-  if (!openai) {
+  const configuredClient = getChatClient();
+  if (!configuredClient) {
     return { ...ruleBasedFallback(params, kb), sources, latencyMs: Date.now() - startedAt };
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.3,
-      response_format: { type: "json_object" },
+    const request: ChatCompletionCreateParamsNonStreaming & {
+      chat_template_kwargs?: { enable_thinking: boolean };
+      reasoning_budget?: number;
+    } = {
+      model: configuredClient.config.model,
+      temperature: 0.2,
+      max_tokens: 800,
       messages: [
         { role: "system", content: `${system}\n\nKB:\n${kb.slice(0, 6000)}` },
         {
@@ -70,23 +68,43 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
         },
         ...params.history.slice(-8),
       ],
-    });
+    };
+    // Nemotron exposes optional reasoning controls through NVIDIA's
+    // OpenAI-compatible extension fields. A CRM reply needs the requested JSON
+    // in the final content channel, not a long reasoning trace.
+    if (configuredClient.config.provider === "nvidia") {
+      Object.assign(request, {
+        chat_template_kwargs: { enable_thinking: false },
+        reasoning_budget: 0,
+      });
+    }
+    const completion = await configuredClient.client.chat.completions.create(request);
     const raw = completion.choices[0]?.message?.content || "{}";
-    const parsed = JSON.parse(raw) as AiReplyResult;
+    const parsed = parseReply(raw);
     return {
       reply: parsed.reply || (params.locale === "tr" ? "Size nasıl yardımcı olabilirim?" : "How can I help?"),
       handoff: Boolean(parsed.handoff),
       qualification: parsed.qualification,
       scoreDelta: Number(parsed.scoreDelta || 0),
-      usedModel: completion.model,
+      usedModel: completion.model || configuredClient.config.model,
       tokensIn: completion.usage?.prompt_tokens,
       tokensOut: completion.usage?.completion_tokens,
       latencyMs: Date.now() - startedAt,
       sources,
     };
   } catch (err) {
-    console.error("OpenAI failed, fallback", err);
+    console.error("LLM completion failed; using rule fallback", err);
     return { ...ruleBasedFallback(params, kb), sources, latencyMs: Date.now() - startedAt };
+  }
+}
+
+function parseReply(raw: string): Partial<AiReplyResult> {
+  const withoutFence = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  const json = withoutFence.match(/\{[\s\S]*\}/)?.[0] || "{}";
+  try {
+    return JSON.parse(json) as Partial<AiReplyResult>;
+  } catch {
+    return { reply: raw.trim() };
   }
 }
 
