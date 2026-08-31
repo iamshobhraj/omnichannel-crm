@@ -2,6 +2,7 @@ import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/ch
 import { prisma } from "./prisma";
 import { retrieveKnowledge, type KnowledgeSource } from "./knowledge";
 import { getChatClient } from "./llm";
+import { getOperationsSettings } from "./tenant-settings";
 
 export type AiReplyResult = {
   reply: string;
@@ -23,6 +24,8 @@ export async function generateBotReply(params: {
   locale: "tr" | "en";
 }): Promise<AiReplyResult> {
   const startedAt = Date.now();
+  const tenant = await prisma.tenant.findUnique({ where: { id: params.tenantId }, select: { settings: true } });
+  const operations = getOperationsSettings(tenant?.settings);
   const lastUserMessage = params.history.filter((message) => message.role === "user").at(-1)?.content || "";
   let sources: KnowledgeSource[] = [];
   try {
@@ -36,15 +39,19 @@ export async function generateBotReply(params: {
 
   const system =
     params.locale === "tr"
-      ? `Sen bir Türkçe satış asistanısın (Omnichannel CRM). FAQ bilgisini kullan.
+      ? `Sen bir Türkçe satış asistanısın. FAQ bilgisini kullan.
 Yalnızca KB'de desteklenen ürün gerçeklerini söyle; KB yeterli değilse insan desteğine yönlendir.
-Kesin fiyat/sözleşme uydurma. Nitelendirme için şehir, ihtiyaç, zaman çizelgesi sor.
-İnsan istediğinde veya karmaşık fiyatta handoff=true yap.
+Kesin fiyat, indirim, sözleşme veya teslimat sözü uydurma. İnsan istediğinde ya da fiyat/teklif sorulduğunda handoff=true yap.
+Tıbbi tavsiye, teşhis, tedavi, hastalık önleme veya kesin sağlık sonucu iddia etme. Sağlıkla ilgili bir soru varsa yalnızca onaylı KB bilgisini tarafsız ve sınırlı biçimde aktar; gerekirse yetkili temsilciye yönlendir.
+Kısa, açık yanıtlar ver ve aynı anda en fazla bir nitelendirme sorusu sor.
+Teknik destek, filtre değişimi, arıza veya bakım talebinde iletişim bilgilerini al ve yetkili ekibin mesai saatleri içinde dönüş yapacağını belirt.
+${operations.aiInstructions ? `Yönetici tarafından onaylanan ek talimatlar:\n${operations.aiInstructions}` : ""}
 JSON dön: {"reply":"...","handoff":false,"qualification":{"city":"","need":"","timeline":""},"scoreDelta":0}`
-      : `You are a sales assistant for an Omnichannel CRM. Use the FAQ knowledge.
+      : `You are a sales assistant. Use the FAQ knowledge.
 Only state product facts supported by the KB; hand off if the KB is insufficient.
-Never invent pricing/contracts. Qualify with city, need, timeline.
-If user asks for human or pricing is complex, set handoff=true.
+Never invent pricing, discounts, contracts, delivery promises, medical advice, diagnoses, treatment, disease prevention, or guaranteed health outcomes.
+If the user asks for a person or for pricing/quotes, set handoff=true. Keep replies concise and ask no more than one qualification question.
+${operations.aiInstructions ? `Administrator-approved additional instructions:\n${operations.aiInstructions}` : ""}
 Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":"","timeline":""},"scoreDelta":0}`;
 
   const configuredClient = getChatClient();
@@ -129,11 +136,11 @@ function ruleBasedFallback(
   return {
     reply: faqHit
       ? params.locale === "tr"
-        ? "Ücretsiz 30 dakikalık keşif görüşmesi planlayabiliriz. Şehriniz ve ekip büyüklüğünüz nedir?"
-        : "We can book a free 30-min discovery call. What’s your city and team size?"
+        ? "Size uygun bilgiyi paylaşabilmem için yetkili bir müşteri danışmanımız yönlendirme yapabilir."
+        : "A customer adviser can share the information that is right for your needs."
       : params.locale === "tr"
-        ? "Merhaba! WhatsApp/web üzerinden lead yönetimi ve AI nitelendirme sunuyoruz. İhtiyacınızı kısaca yazar mısınız?"
-        : "Hi! We offer WhatsApp/web lead management with AI qualification. What do you need help with?",
+        ? "Merhaba! Size ürünlerimiz hakkında bilgi verebilirim. Daha önce su arıtma cihazı kullandınız mı?"
+        : "Hello! I can share information about our products. Have you used a water treatment device before?",
     handoff: false,
     scoreDelta: 5,
     usedModel: "rule-fallback",

@@ -31,6 +31,7 @@ const nav = [
   { href: "/events", key: "tasks" as const, icon: CalendarDays },
   { href: "/automations", key: "tasks" as const, icon: Workflow },
   { href: "/widget-settings", key: "widget" as const, icon: Settings2 },
+  { href: "/operations", key: "operations" as const, icon: Settings2 },
   { href: "/costs", key: "costs" as const, icon: Wallet },
   { href: "/knowledge", key: "knowledge" as const, icon: BookOpen },
   { href: "/widget-demo", key: "widget" as const, icon: MessageSquare },

@@ -94,7 +94,7 @@ export async function POST(req: Request, ctx: Ctx) {
       if (ai.handoff) {
         await prisma.conversation.update({
           where: { id },
-          data: { aiMode: "off", handoffAt: new Date(), status: "pending" },
+          data: { aiMode: "off", handoffAt: new Date(), unassignedAt: new Date(), status: "pending" },
         });
       }
     }
@@ -153,16 +153,27 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     const current = await prisma.conversation.findFirst({ where: { id, tenantId: session.tenantId }, include: { contact: { select: { automationPausedAt: true } } } });
     if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    await prisma.conversation.update({
-      where: { id },
-      data: {
-        ...(body.aiMode ? { aiMode: body.aiMode } : {}),
-        ...(body.status ? { status: body.status } : {}),
-        ...(body.assigneeId !== undefined ? { assigneeId } : {}),
-        ...(body.handoff
-          ? { aiMode: "off", handoffAt: new Date(), status: "pending" }
-          : {}),
-      },
+    const assignmentChanged = body.assigneeId !== undefined && assigneeId !== current.assigneeId;
+    const now = new Date();
+    await prisma.$transaction(async (tx) => {
+      await tx.conversation.update({
+        where: { id },
+        data: {
+          ...(body.aiMode ? { aiMode: body.aiMode } : {}),
+          ...(body.status ? { status: body.status } : {}),
+          ...(body.assigneeId !== undefined ? { assigneeId } : {}),
+          ...(assignmentChanged && assigneeId ? { assignedAt: now, unassignedAt: null, lastCallAt: null, unassignedEscalatedAt: null, firstCallEscalatedAt: null, threeHourEscalatedAt: null } : {}),
+          ...(assignmentChanged && !assigneeId ? { assignedAt: null, unassignedAt: now, lastCallAt: null, unassignedEscalatedAt: null, firstCallEscalatedAt: null, threeHourEscalatedAt: null } : {}),
+          ...(body.handoff ? { aiMode: "off", handoffAt: now, unassignedAt: now, status: "pending", assigneeId: null, assignedAt: null, lastCallAt: null, unassignedEscalatedAt: null, firstCallEscalatedAt: null, threeHourEscalatedAt: null } : {}),
+        },
+      });
+      if (assignmentChanged) {
+        await tx.contact.update({ where: { id: current.contactId }, data: { ownerUserId: assigneeId || null } });
+        await tx.lead.updateMany({
+          where: { tenantId: session.tenantId, contactId: current.contactId, stage: { is: { isLost: false, isWon: false } } },
+          data: { ownerUserId: assigneeId || null },
+        });
+      }
     });
     if (assigneeId && assigneeId !== session.id) await notify({ tenantId: session.tenantId, userId: assigneeId, type: "conversation_assigned", title: "New conversation assigned", body: `Conversation ${id} was assigned to you.` });
     if (body.automationPaused !== undefined) await prisma.contact.update({ where: { id: current.contactId }, data: { automationPausedAt: body.automationPaused ? new Date() : null } });

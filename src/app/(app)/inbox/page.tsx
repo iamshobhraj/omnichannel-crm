@@ -116,6 +116,18 @@ export default function InboxPage() {
     await loadThread(active);
   }
 
+  async function logCall() {
+    if (!active) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/conversations/${active}/call`, { method: "POST" });
+      if (!response.ok) { const data = await response.json().catch(() => ({})); setComposerError(data.error?.message || "Call could not be logged."); return; }
+      await loadThread(active);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function updateConversation(data: Record<string, unknown>) {
     if (!active) return;
     setLoading(true);
@@ -177,6 +189,7 @@ export default function InboxPage() {
                   <select value={thread.assignee?.id || ""} onChange={(e) => updateConversation({ assigneeId: e.target.value || null })} className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs"><option value="">{locale === "tr" ? "Temsilci seç" : "Assign agent"}</option>{assignees.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select>
                   <button disabled={loading} onClick={() => updateConversation({ assigneeId: "me" })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{locale === "tr" ? "Bana ata" : "Assign to me"}</button>
                   <button disabled={loading} onClick={() => updateConversation({ assigneeId: null })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{locale === "tr" ? "Atamayı kaldır" : "Unassign"}</button>
+                  <button disabled={loading || !thread.assignee} onClick={logCall} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{locale === "tr" ? "Arama yapıldı" : "Log call"}</button>
                   <button disabled={loading} onClick={() => updateConversation({ status: thread.status === "closed" ? "open" : "closed" })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{thread.status === "closed" ? (locale === "tr" ? "Yeniden aç" : "Reopen") : (locale === "tr" ? "Kapat" : "Close")}</button>
                   <button onClick={handoff} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{t(locale, "handoff")}</button>
                   <button disabled={loading} onClick={() => updateConversation({ automationPaused: !thread.contact.automationPausedAt })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{thread.contact.automationPausedAt ? (locale === "tr" ? "Otomasyonu sürdür" : "Resume automation") : (locale === "tr" ? "Otomasyonu duraklat" : "Pause automation")}</button>

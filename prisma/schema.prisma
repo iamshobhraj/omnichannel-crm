@@ -208,6 +208,12 @@ model Conversation {
   channelType  String             @default("website")
   status       ConversationStatus @default(open)
   assigneeId   String?
+  assignedAt   DateTime?
+  unassignedAt DateTime?
+  lastCallAt   DateTime?
+  unassignedEscalatedAt DateTime?
+  firstCallEscalatedAt  DateTime?
+  threeHourEscalatedAt  DateTime?
   lastMessageAt DateTime          @default(now())
   aiMode       AiMode             @default(auto)
   handoffAt    DateTime?
