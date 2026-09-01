@@ -1,6 +1,8 @@
 # EA Global Water / Biohidrogen — Safe AI Knowledge Base Draft
 
-Status: draft for client and legal/compliance approval before live indexing.
+Status: client-approved for staging AI indexing on 1 September 2026. This is a
+safety-normalized version of the client-supplied CRM knowledge pack; use it for
+customer-facing answers instead of raw health or conflicting commercial claims.
 
 ## Customer communication rules
 
