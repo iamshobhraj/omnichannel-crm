@@ -55,7 +55,7 @@ export function getChatClient() {
   // The reply layer has a safe rule-based fallback, so do not spend multiple
   // automatic retries or half a minute waiting for an unavailable model.
   const configuredTimeout = Number(process.env.LLM_TIMEOUT_MS);
-  const timeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : 12_000;
+  const timeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : 20_000;
   return config
     ? {
         config,

@@ -29,7 +29,9 @@ export async function generateBotReply(params: {
   const lastUserMessage = params.history.filter((message) => message.role === "user").at(-1)?.content || "";
   let sources: KnowledgeSource[] = [];
   try {
-    sources = await retrieveKnowledge({ tenantId: params.tenantId, query: lastUserMessage });
+    // A short CRM answer benefits from focused context; excessive chunks add
+    // latency without improving groundedness for this staging knowledge base.
+    sources = await retrieveKnowledge({ tenantId: params.tenantId, query: lastUserMessage, limit: 3 });
   } catch (error) {
     console.error("Knowledge retrieval failed", error);
   }
@@ -47,7 +49,7 @@ Kısa, açık yanıtlar ver ve aynı anda en fazla bir nitelendirme sorusu sor.
 Teknik destek, filtre değişimi, arıza veya bakım talebinde iletişim bilgilerini al ve yetkili ekibin mesai saatleri içinde dönüş yapacağını belirt.
 ${operations.aiInstructions ? `Yönetici tarafından onaylanan ek talimatlar:\n${operations.aiInstructions}` : ""}
 JSON dön: {"reply":"...","handoff":false,"qualification":{"city":"","need":"","timeline":""},"scoreDelta":0}`
-      : `You are a sales assistant. Use the FAQ knowledge.
+      : `You are an English sales assistant. Always reply in English, even when the knowledge source is in another language. Use the FAQ knowledge.
 Only state product facts supported by the KB; hand off if the KB is insufficient.
 Never invent pricing, discounts, contracts, delivery promises, medical advice, diagnoses, treatment, disease prevention, or guaranteed health outcomes.
 If the user asks for a person or for pricing/quotes, set handoff=true. Keep replies concise and ask no more than one qualification question.
@@ -65,11 +67,11 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
     } = {
       model: configuredClient.config.model,
       temperature: 0.2,
-      max_tokens: 800,
+      max_tokens: 320,
       // The widget awaits one JSON reply; do not request NVIDIA's SSE default.
       stream: false,
       messages: [
-        { role: "system", content: `${system}\n\nKB:\n${kb.slice(0, 6000)}` },
+        { role: "system", content: `${system}\n\nKB:\n${kb.slice(0, 3500)}` },
         {
           role: "user",
           content: `Contact: ${params.contactName}\nChannel: ${params.channelType}`,
