@@ -61,12 +61,13 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
 
   try {
     const request: ChatCompletionCreateParamsNonStreaming & {
-      chat_template_kwargs?: { enable_thinking: boolean };
-      reasoning_budget?: number;
+      reasoning_effort?: "none" | "low" | "high";
     } = {
       model: configuredClient.config.model,
       temperature: 0.2,
       max_tokens: 800,
+      // The widget awaits one JSON reply; do not request NVIDIA's SSE default.
+      stream: false,
       messages: [
         { role: "system", content: `${system}\n\nKB:\n${kb.slice(0, 6000)}` },
         {
@@ -76,14 +77,10 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
         ...params.history.slice(-8),
       ],
     };
-    // Nemotron exposes optional reasoning controls through NVIDIA's
-    // OpenAI-compatible extension fields. A CRM reply needs the requested JSON
-    // in the final content channel, not a long reasoning trace.
+    // A CRM reply needs the requested JSON in the final content channel, not a
+    // long reasoning trace. This is NVIDIA's current documented control.
     if (configuredClient.config.provider === "nvidia") {
-      Object.assign(request, {
-        chat_template_kwargs: { enable_thinking: false },
-        reasoning_budget: 0,
-      });
+      request.reasoning_effort = "none";
     }
     const completion = await configuredClient.client.chat.completions.create(request);
     const raw = completion.choices[0]?.message?.content || "{}";
