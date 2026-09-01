@@ -3,7 +3,7 @@
 ## Deploy
 
 1. Copy `.env.example` to a server-only `.env`; set PostgreSQL, JWT, encryption,
-   OpenAI/AiSensy/Resend, and `WIDGET_ALLOWED_ORIGINS` values. Never commit it.
+   OpenAI/AiSensy/Resend, embedding-provider, and `WIDGET_ALLOWED_ORIGINS` values. Never commit it.
 2. Run `docker compose up -d --build`.
 3. Run reviewed Prisma migrations with `npx prisma migrate deploy` in the app
    container, then check `/api/health` and `/api/ready`.
@@ -26,5 +26,6 @@ provider failures after recording the message ID and safe error summary.
 ## Before UAT
 
 Verify DNS/TLS, `WIDGET_ALLOWED_ORIGINS`, live webhook signature validation,
-AiSensy template approval, OpenAI spend cap, Redis readiness, a backup, and one
-restore test.
+AiSensy template approval, embedding smoke-test/index preparation, Redis
+readiness, a backup, and one restore test. Follow
+`EMBEDDING_PROMOTION_RUNBOOK.md` for NVIDIA staging and OpenAI production RAG.

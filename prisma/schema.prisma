@@ -68,6 +68,7 @@ model Tenant {
   tasks           Task[]
   knowledgeDocs   KnowledgeDocument[]
   knowledgeChunks KnowledgeChunk[]
+  knowledgeIndexes KnowledgeIndex[]
   usageEvents     UsageEvent[]
   rateCard        RateCard?
   budgetPolicy    BudgetPolicy?
@@ -484,29 +485,54 @@ model KnowledgeDocument {
   status         String           @default("ready")
   errorMessage   String?
   embeddingModel String?
+  embeddingIndexId String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  embeddingIndex KnowledgeIndex? @relation(fields: [embeddingIndexId], references: [id], onDelete: SetNull)
   chunks KnowledgeChunk[]
 
   @@index([tenantId, status])
+  @@index([tenantId, embeddingIndexId])
+}
+
+model KnowledgeIndex {
+  id         String   @id @default(cuid())
+  tenantId   String
+  provider   String
+  model      String
+  dimensions Int
+  version    String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documents KnowledgeDocument[]
+  chunks    KnowledgeChunk[]
+
+  @@unique([tenantId, provider, model, dimensions, version])
+  @@index([tenantId, isActive])
 }
 
 model KnowledgeChunk {
   id         String   @id
   tenantId   String
   documentId String
+  indexId    String
   content    String
   tokenCount Int
   metadata   Json     @default("{}")
-  embedding  Unsupported("vector(1536)")
+  embedding  Unsupported("vector")
   createdAt  DateTime @default(now())
 
   tenant   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   document KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  index    KnowledgeIndex    @relation(fields: [indexId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, documentId])
+  @@index([tenantId, indexId, documentId])
 }
 
 model UsageEvent {

@@ -10,6 +10,7 @@ export async function GET() {
     const session = await requireSession();
     const docs = await prisma.knowledgeDocument.findMany({
       where: { tenantId: session.tenantId },
+      include: { embeddingIndex: { select: { provider: true, model: true, dimensions: true, version: true } } },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ docs, canManage: canManageKnowledge(session.role) });

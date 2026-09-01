@@ -19,6 +19,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:setup": "prisma db push && tsx prisma/seed.ts",
     "tenant:provision": "tsx scripts/provision-client-tenant.ts",
+    "embeddings:prepare": "tsx scripts/prepare-embedding-index.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

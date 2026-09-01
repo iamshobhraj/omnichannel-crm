@@ -11,6 +11,7 @@ type KnowledgeDoc = {
   sourceFilename?: string | null;
   status: string;
   errorMessage?: string | null;
+  embeddingIndex?: { provider: string; model: string; dimensions: number; version: string } | null;
   updatedAt: string;
 };
 
@@ -113,7 +114,7 @@ export default function KnowledgePage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="font-bold">{doc.title}</h2>
-                <p className="mt-1 text-xs text-slate-500">{doc.sourceFilename || (locale === "tr" ? "Yazılı içerik" : "Pasted content")} · <span className="font-semibold uppercase">{doc.status}</span></p>
+                <p className="mt-1 text-xs text-slate-500">{doc.sourceFilename || (locale === "tr" ? "Yazılı içerik" : "Pasted content")} · <span className="font-semibold uppercase">{doc.status}</span>{doc.embeddingIndex ? ` · ${doc.embeddingIndex.provider}/${doc.embeddingIndex.model} · ${doc.embeddingIndex.dimensions}d · ${doc.embeddingIndex.version}` : ""}</p>
               </div>
               {canManage && <div className="flex gap-2"><button disabled={busy} onClick={() => action(doc.id, "PATCH")} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">{locale === "tr" ? "Yeniden indeksle" : "Re-index"}</button><button disabled={busy} onClick={() => action(doc.id, "DELETE")} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700">{locale === "tr" ? "Sil" : "Delete"}</button></div>}
             </div>
