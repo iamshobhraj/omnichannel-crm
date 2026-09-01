@@ -267,6 +267,7 @@ model Task {
   body         String?
   assigneeId   String?
   dueAt        DateTime?
+  dueNotifiedAt DateTime?
   status       TaskStatus @default(open)
   completedAt  DateTime?
   createdAt    DateTime   @default(now())
@@ -279,6 +280,7 @@ model Task {
   assignee User?  @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   @@index([tenantId, status, dueAt])
+  @@index([status, dueNotifiedAt, dueAt])
   @@index([tenantId, contactId])
   @@index([tenantId, conversationId])
 }
@@ -314,6 +316,7 @@ model Notification {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, userId, readAt])
+  @@index([tenantId, userId, createdAt])
 }
 
 model AutomationRule {
