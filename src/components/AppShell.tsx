@@ -30,14 +30,14 @@ const nav = [
   { href: "/contacts", key: "contacts" as const, icon: Users },
   { href: "/leads", key: "leads" as const, icon: Kanban },
   { href: "/tasks", key: "tasks" as const, icon: CheckSquare },
-  { href: "/events", key: "tasks" as const, icon: CalendarDays },
-  { href: "/automations", key: "tasks" as const, icon: Workflow },
+  { href: "/events", key: "calendar" as const, icon: CalendarDays },
+  { href: "/automations", key: "automations" as const, icon: Workflow },
   { href: "/campaigns", key: "campaigns" as const, icon: Send },
-  { href: "/widget-settings", key: "widget" as const, icon: Settings2 },
+  { href: "/widget-settings", key: "widgetSettings" as const, icon: Settings2 },
   { href: "/operations", key: "operations" as const, icon: Settings2 },
   { href: "/costs", key: "costs" as const, icon: Wallet },
   { href: "/knowledge", key: "knowledge" as const, icon: BookOpen },
-  { href: "/widget-demo", key: "widget" as const, icon: MessageSquare },
+  { href: "/widget-demo", key: "widgetDemo" as const, icon: MessageSquare },
 ];
 
 const routeData: Record<string, string[]> = {
