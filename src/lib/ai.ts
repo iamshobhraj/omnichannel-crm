@@ -81,6 +81,7 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
     // long reasoning trace. This is NVIDIA's current documented control.
     if (configuredClient.config.provider === "nvidia") {
       request.reasoning_effort = "none";
+      request.response_format = { type: "json_object" };
     }
     const completion = await configuredClient.client.chat.completions.create(request);
     const raw = completion.choices[0]?.message?.content || "{}";
@@ -104,11 +105,14 @@ Return JSON: {"reply":"...","handoff":false,"qualification":{"city":"","need":""
 
 function parseReply(raw: string): Partial<AiReplyResult> {
   const withoutFence = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-  const json = withoutFence.match(/\{[\s\S]*\}/)?.[0] || "{}";
+  const json = withoutFence.match(/\{[\s\S]*\}/)?.[0];
+  // Providers occasionally return useful plain text despite a JSON instruction.
+  // Preserve it instead of turning it into an empty object and a generic reply.
+  if (!json) return withoutFence ? { reply: withoutFence } : {};
   try {
     return JSON.parse(json) as Partial<AiReplyResult>;
   } catch {
-    return { reply: raw.trim() };
+    return withoutFence ? { reply: withoutFence } : {};
   }
 }
 
