@@ -67,12 +67,16 @@ function indexName(index: KnowledgeIndex) {
   return `KnowledgeChunk_embedding_${index.id}`.slice(0, 60);
 }
 
-/** Creates a separate ANN index for one provider/model/dimension/version. */
+/**
+ * Creates a separate ANN index for one provider/model/dimension/version.
+ * halfvec supports HNSW indexes up to 4,000 dimensions, unlike vector's
+ * 2,000-dimensional HNSW limit; Nemotron's native output is 2,048.
+ */
 export async function ensureKnowledgeVectorIndex(index: KnowledgeIndex) {
   const name = indexName(index).replace(/"/g, "");
   const indexId = index.id.replace(/'/g, "''");
   await prisma.$executeRawUnsafe(
-    `CREATE INDEX IF NOT EXISTS "${name}" ON "KnowledgeChunk" USING hnsw (("embedding"::vector(${index.dimensions})) vector_cosine_ops) WHERE "indexId" = '${indexId}'`,
+    `CREATE INDEX IF NOT EXISTS "${name}" ON "KnowledgeChunk" USING hnsw (("embedding"::halfvec(${index.dimensions})) halfvec_cosine_ops) WHERE "indexId" = '${indexId}'`,
   );
 }
 
@@ -113,11 +117,12 @@ export async function retrieveKnowledge(params: { tenantId: string; query: strin
   const { config, index } = await getActiveKnowledgeIndex(params.tenantId);
   const [embedding] = await createEmbeddings(config, [params.query], "query");
   const vector = vectorLiteral(embedding, index.dimensions);
+  const halfvec = Prisma.raw(`halfvec(${index.dimensions})`);
   const rows = await prisma.$queryRaw<KnowledgeSource[]>(
-    Prisma.sql`SELECT chunk."documentId", document."title", chunk."content", 1 - (chunk."embedding" <=> ${vector}::vector) AS "score"
+    Prisma.sql`SELECT chunk."documentId", document."title", chunk."content", 1 - (chunk."embedding"::${halfvec} <=> ${vector}::${halfvec}) AS "score"
       FROM "KnowledgeChunk" AS chunk JOIN "KnowledgeDocument" AS document ON document."id" = chunk."documentId"
       WHERE chunk."tenantId" = ${params.tenantId} AND chunk."indexId" = ${index.id} AND document."embeddingIndexId" = ${index.id} AND document."status" = 'ready'
-      ORDER BY chunk."embedding" <=> ${vector}::vector LIMIT ${Math.min(Math.max(params.limit || 5, 1), 8)}`,
+      ORDER BY chunk."embedding"::${halfvec} <=> ${vector}::${halfvec} LIMIT ${Math.min(Math.max(params.limit || 5, 1), 8)}`,
   );
   return rows.filter((row) => row.score >= 0.25);
 }
