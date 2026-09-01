@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/ClientProviders";
 import { t } from "@/lib/i18n";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { getClientJson, invalidateClientJson } from "@/lib/client-json-cache";
 
 type Stage = { id: string; key: string; name: string; nameTr: string };
 type LeadRow = {
@@ -25,8 +26,7 @@ export default function LeadsPage() {
   const [q, setQ] = useState("");
 
   const load = useCallback(async (query = "") => {
-    const res = await fetch(`/api/leads?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
+    const data = await getClientJson<{ leads?: LeadRow[]; stages?: Stage[] }>(`/api/leads?q=${encodeURIComponent(query)}`);
     setLeads(data.leads || []);
     setStages(data.stages || []);
   }, []);
@@ -41,6 +41,7 @@ export default function LeadsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, stageId }),
     });
+    invalidateClientJson("/api/leads");
     load(q);
   }
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { t, type Locale } from "@/lib/i18n";
+import { clearClientJsonCache, prefetchClientJson } from "@/lib/client-json-cache";
 import { useEffect, useState } from "react";
 
 const nav = [
@@ -38,6 +39,18 @@ const nav = [
   { href: "/knowledge", key: "knowledge" as const, icon: BookOpen },
   { href: "/widget-demo", key: "widget" as const, icon: MessageSquare },
 ];
+
+const routeData: Record<string, string[]> = {
+  "/dashboard": ["/api/dashboard"],
+  "/contacts": ["/api/contacts"],
+  "/leads": ["/api/leads?q="],
+  "/tasks": ["/api/tasks"],
+  "/events": ["/api/events"],
+  "/costs": ["/api/costs"],
+  "/knowledge": ["/api/knowledge"],
+  "/operations": ["/api/admin/operations"],
+  "/widget-settings": ["/api/admin/widget"],
+};
 
 export function AppShell({
   children,
@@ -57,8 +70,18 @@ export function AppShell({
   const [openNotifications, setOpenNotifications] = useState(false);
   async function loadNotifications() { const response = await fetch("/api/notifications"); const data = await response.json(); const rows = data.notifications || []; setNotifications(rows); setUnread(rows.filter((item: { readAt?: string | null }) => !item.readAt).length); }
   useEffect(() => { void loadNotifications(); const source = new EventSource("/api/realtime"); source.addEventListener("summary", (event) => { const data = JSON.parse(event.data) as { unread?: number }; setUnread(data.unread || 0); }); return () => source.close(); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      nav.forEach((item) => {
+        router.prefetch(item.href);
+        routeData[item.href]?.forEach(prefetchClientJson);
+      });
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [router]);
 
   async function logout() {
+    clearClientJsonCache();
     await fetch("/api/auth", { method: "DELETE" });
     router.push("/login");
     router.refresh();
