@@ -21,7 +21,7 @@ export async function PATCH(req: Request, ctx: Context) {
       const contact = await tx.contact.update({ where: { id }, data: input });
       const suppressed = consentWithdrawn
         ? await tx.campaignRecipient.updateMany({
-            where: { tenantId: session.tenantId, contactId: id, status: "queued" },
+            where: { tenantId: session.tenantId, contactId: id, status: { in: ["queued", "retry"] } },
             data: { status: "suppressed", error: "Marketing consent withdrawn" },
           })
         : { count: 0 };
@@ -37,9 +37,9 @@ export async function PATCH(req: Request, ctx: Context) {
       entityType: "contact",
       entityId: id,
       before: { displayName: before.displayName, consentWhatsappMarketing: before.consentWhatsappMarketing },
-      after: { displayName: contact.displayName, consentWhatsappMarketing: contact.consentWhatsappMarketing, suppressedQueuedCampaignRecipients: suppressedCount },
+      after: { displayName: contact.displayName, consentWhatsappMarketing: contact.consentWhatsappMarketing, suppressedCampaignRecipients: suppressedCount },
     });
-    return NextResponse.json({ contact, suppressedQueuedCampaignRecipients: suppressedCount });
+    return NextResponse.json({ contact, suppressedCampaignRecipients: suppressedCount });
   } catch (error) { return fromApiError(error); }
 }
 export async function DELETE(req: Request, ctx: Context) {

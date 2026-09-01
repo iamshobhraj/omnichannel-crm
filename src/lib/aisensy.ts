@@ -115,17 +115,26 @@ export async function sendAisensyTemplate(params: { to: string; name: string; la
   }
 }
 
-export async function logWhatsappUsage(tenantId: string, outboundCount = 1) {
+export function isAisensyTemplateDeliveryConfigured() {
+  return Boolean(process.env.AISENSY_API_KEY && process.env.AISENSY_TEMPLATE_API_URL);
+}
+
+export async function logWhatsappUsage(
+  tenantId: string,
+  outboundCount = 1,
+  details?: { eventType?: string; meta?: Record<string, string | number | boolean | null> },
+) {
   const card = await prisma.rateCard.findUnique({ where: { tenantId } });
   const unit = card?.whatsappMsg ?? 0.005;
   await prisma.usageEvent.create({
     data: {
       tenantId,
       category: "whatsapp",
-      eventType: "outbound",
+      eventType: details?.eventType || "outbound",
       quantity: outboundCount,
       unitCost: unit,
       totalCost: Number((unit * outboundCount).toFixed(4)),
+      meta: details?.meta,
     },
   });
 }

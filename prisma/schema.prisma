@@ -420,6 +420,9 @@ model CampaignRecipient {
   campaignId  String
   contactId   String
   status      String   @default("queued")
+  attempts    Int      @default(0)
+  nextAttemptAt DateTime?
+  sendingAt   DateTime?
   externalMessageId String?
   error       String?
   sentAt      DateTime?
@@ -434,7 +437,7 @@ model CampaignRecipient {
   contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, contactId])
-  @@index([tenantId, status])
+  @@index([tenantId, status, nextAttemptAt])
 }
 
 model AuditLog {

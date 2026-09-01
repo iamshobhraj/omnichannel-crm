@@ -5,6 +5,7 @@ import { notify } from "./lib/notifications";
 import { runAutomations } from "./lib/automation";
 import { enqueueAutomation } from "./lib/queue";
 import { getOperationsSettings, type OperationsSettings } from "./lib/tenant-settings";
+import { processDueCampaigns } from "./lib/campaigns";
 
 type SlaConversation = { id: string; tenantId: string; contactId: string; assigneeId: string | null; assignedAt: Date | null; unassignedAt: Date | null; tenant: { settings: unknown } };
 
@@ -53,7 +54,7 @@ async function scan() {
   const now = new Date();
   const due = await prisma.task.findMany({ where: { status: "open", dueAt: { lte: now }, assigneeId: { not: null } }, select: { id: true, tenantId: true, title: true, assigneeId: true, contactId: true } });
   for (const task of due) { if (task.assigneeId) await notify({ tenantId: task.tenantId, userId: task.assigneeId, type: "task_due", title: "Follow-up due", body: task.title }); await runAutomations(task.tenantId, "task_overdue", { assigneeId: task.assigneeId || undefined, contactId: task.contactId || undefined }); }
-  await Promise.all([escalateUnassigned(now), escalateNoCall(now, "first"), escalateNoCall(now, "threeHour")]);
+  await Promise.all([escalateUnassigned(now), escalateNoCall(now, "first"), escalateNoCall(now, "threeHour"), processDueCampaigns()]);
 }
 
 const connection = process.env.REDIS_URL ? { url: process.env.REDIS_URL } : undefined;
@@ -65,4 +66,4 @@ new Worker("automation", async (job) => {
 
 function scheduleScan() { void enqueueAutomation("sla_scan", {}).catch((error) => console.error("Unable to enqueue SLA scan", error)); }
 scheduleScan();
-setInterval(scheduleScan, 5 * 60 * 1000);
+setInterval(scheduleScan, 60 * 1000);
