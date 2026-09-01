@@ -54,21 +54,28 @@ function assertEmbeddings(embeddings: number[][], config: EmbeddingConfiguration
   return embeddings;
 }
 
-export async function createEmbeddings(config: EmbeddingConfiguration, inputs: string[]) {
+export async function createEmbeddings(
+  config: EmbeddingConfiguration,
+  inputs: string[],
+  inputType: "query" | "passage" = "query",
+) {
   if (!inputs.length) return [] as number[][];
   const client = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, timeout: 30_000 });
-  const response = await client.embeddings.create({
+  const request = {
     model: config.model,
     input: inputs,
     // NVIDIA NIM exposes an OpenAI-compatible endpoint but its model controls
     // dimensionality. Only OpenAI's embedding-3 API accepts this override.
-    ...(config.provider === "openai" ? { dimensions: config.dimensions } : {}),
-  });
+    ...(config.provider === "openai" ? { dimensions: config.dimensions } : { input_type: inputType, modality: "text" }),
+  };
+  // NVIDIA's OpenAI-compatible embedding endpoint extends the request body
+  // with input_type/modality; the OpenAI SDK type intentionally omits them.
+  const response = await client.embeddings.create(request as never);
   return assertEmbeddings(response.data.map((item) => item.embedding), config);
 }
 
 export async function smokeTestEmbeddings(config = getEmbeddingConfiguration()) {
   if (!config) throw new Error("EMBEDDING_PROVIDER is not configured");
-  const [embedding] = await createEmbeddings(config, ["EA Global Water embedding smoke test"]);
+  const [embedding] = await createEmbeddings(config, ["EA Global Water embedding smoke test"], "query");
   return { provider: config.provider, model: config.model, dimensions: embedding.length, indexVersion: config.indexVersion };
 }

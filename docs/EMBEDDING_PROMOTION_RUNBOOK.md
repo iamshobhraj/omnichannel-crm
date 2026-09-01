@@ -39,7 +39,7 @@ separate databases and preserve their own index for testing and launch history.
    docker compose run --rm app npm run embeddings:prepare -- ea-global-water-staging
    ```
 
-   It sends one harmless smoke-test string, verifies the returned dimension
+   It sends one harmless query-type smoke-test string, verifies the returned dimension
    matches `EMBEDDING_DIMENSIONS`, creates the matching partial HNSW pgvector
    index, and prints the resulting identity. A mismatch fails closed.
 4. Upload only client-approved EA Global Water documents. The repository's

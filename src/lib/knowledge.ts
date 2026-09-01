@@ -86,7 +86,7 @@ export async function ingestKnowledgeDocument(documentId: string, tenantId: stri
 
     const { config, index } = await getActiveKnowledgeIndex(tenantId);
     const embeddings: number[][] = [];
-    for (let start = 0; start < chunks.length; start += 50) embeddings.push(...(await createEmbeddings(config, chunks.slice(start, start + 50))));
+    for (let start = 0; start < chunks.length; start += 50) embeddings.push(...(await createEmbeddings(config, chunks.slice(start, start + 50), "passage")));
     // The successful provider call above verifies actual dimensions before the
     // pgvector ANN index is created or updated.
     await ensureKnowledgeVectorIndex(index);
@@ -111,7 +111,7 @@ export async function ingestKnowledgeDocument(documentId: string, tenantId: stri
 export async function retrieveKnowledge(params: { tenantId: string; query: string; limit?: number }) {
   if (!params.query.trim()) return [] as KnowledgeSource[];
   const { config, index } = await getActiveKnowledgeIndex(params.tenantId);
-  const [embedding] = await createEmbeddings(config, [params.query]);
+  const [embedding] = await createEmbeddings(config, [params.query], "query");
   const vector = vectorLiteral(embedding, index.dimensions);
   const rows = await prisma.$queryRaw<KnowledgeSource[]>(
     Prisma.sql`SELECT chunk."documentId", document."title", chunk."content", 1 - (chunk."embedding" <=> ${vector}::vector) AS "score"
