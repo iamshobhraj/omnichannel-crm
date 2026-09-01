@@ -51,5 +51,20 @@ export function getChatConfiguration(): ChatConfiguration | null {
 
 export function getChatClient() {
   const config = getChatConfiguration();
-  return config ? { config, client: new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, timeout: 30_000 }) } : null;
+  // A customer-facing widget must degrade quickly when a provider is overloaded.
+  // The reply layer has a safe rule-based fallback, so do not spend multiple
+  // automatic retries or half a minute waiting for an unavailable model.
+  const configuredTimeout = Number(process.env.LLM_TIMEOUT_MS);
+  const timeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : 12_000;
+  return config
+    ? {
+        config,
+        client: new OpenAI({
+          apiKey: config.apiKey,
+          baseURL: config.baseURL,
+          timeout,
+          maxRetries: 0,
+        }),
+      }
+    : null;
 }
