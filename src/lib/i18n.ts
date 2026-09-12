@@ -1,7 +1,7 @@
 export const dictionaries = {
   tr: {
-    appName: "OmniCRM",
-    tagline: "Omnichannel AI Lead Platform",
+    appName: "EA Global Water",
+    tagline: "Su Arıtma CRM",
     login: "Giriş yap",
     email: "E-posta",
     password: "Şifre",
@@ -38,11 +38,11 @@ export const dictionaries = {
     newLead: "Yeni lead",
     search: "Ara…",
     noData: "Kayıt yok",
-    demoCreds: "Demo: owner@demo.com / Demo1234!",
+    demoCreds: "",
   },
   en: {
-    appName: "OmniCRM",
-    tagline: "Omnichannel AI Lead Platform",
+    appName: "EA Global Water",
+    tagline: "Water Treatment CRM",
     login: "Sign in",
     email: "Email",
     password: "Password",
@@ -79,7 +79,7 @@ export const dictionaries = {
     newLead: "New lead",
     search: "Search…",
     noData: "No records",
-    demoCreds: "Demo: owner@demo.com / Demo1234!",
+    demoCreds: "",
   },
 } as const;
 

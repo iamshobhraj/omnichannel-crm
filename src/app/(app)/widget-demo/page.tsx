@@ -20,8 +20,8 @@ export default function WidgetDemoPage() {
       role: "bot",
       text:
         locale === "tr"
-          ? "Merhaba! Size nasıl yardımcı olabiliriz?"
-          : "Hello! How can we help you today?",
+          ? "EA Global Water'a hoş geldiniz. Su arıtma ihtiyaçlarınızda nasıl yardımcı olabiliriz?"
+          : "Welcome to EA Global Water. How can we help with your water-treatment needs?",
     },
   ]);
   const [text, setText] = useState("");
@@ -86,7 +86,7 @@ export default function WidgetDemoPage() {
         </p>
       </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
-        <div className="bg-slate-900 px-4 py-3 text-sm font-bold text-white">OmniCRM Chat</div>
+        <div className="bg-slate-900 px-4 py-3 text-sm font-bold text-white">EA Global Water Chat</div>
         <div className="h-80 space-y-2 overflow-y-auto p-4">
           {messages.map((m, i) => (
             <div

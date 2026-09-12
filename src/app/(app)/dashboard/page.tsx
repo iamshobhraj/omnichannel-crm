@@ -46,8 +46,8 @@ export default function DashboardPage() {
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           {locale === "tr"
-            ? "LeadGen tarzı omnichannel görünüm — gelen kutusu, pipeline, AI ve günlük maliyet."
-            : "LeadGen-class omnichannel view — inbox, pipeline, AI and daily cost."}
+            ? "EA Global Water müşteri yönetimi — gelen kutusu, pipeline, yapay zeka ve günlük maliyet."
+            : "EA Global Water customer management — inbox, pipeline, AI, and daily cost."}
         </p>
       </div>
 
